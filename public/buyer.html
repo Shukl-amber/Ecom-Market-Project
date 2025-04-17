@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Ecom Market - Shop</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="buyer_styles.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/buyer_styles.css">
 </head>
 <body>
   <header class="shop-header">
@@ -56,7 +56,6 @@
     const cartModal = document.getElementById('cartModal');
     const userId = localStorage.getItem('userId');
 
-    // Check login status
     if (!userId) {
       window.location.href = 'index.html';
     }
@@ -67,7 +66,6 @@
       window.location.href = 'index.html';
     }
 
-    // Search functionality
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const searchTerm = e.target.value.toLowerCase();
       filterProducts(searchTerm);
@@ -90,7 +88,6 @@
       displayProducts(filteredProducts);
     }
 
-    // Cart functionality
     let cartItemCount = 0;
     
     async function updateCartBadge() {
@@ -224,7 +221,6 @@
       totalElement.textContent = `₹${total.toLocaleString()}`;
     }
 
-    // Product display
     function displayProducts(products) {
       const container = document.getElementById('productsContainer');
       
@@ -278,7 +274,6 @@
           .join('');
     }
 
-    // Initialize
     async function initialize() {
       try {
         const response = await fetch('/api/products');
@@ -296,7 +291,6 @@
       }
     }
 
-    // Event Listeners
     document.getElementById('sortSelect').addEventListener('change', (e) => {
       const sortBy = e.target.value;
       const sorted = [...filteredProducts];
@@ -359,7 +353,6 @@
           throw new Error(data.error || 'Checkout failed');
         }
 
-        // Reset cart display
         cartModal.style.display = 'none';
         await updateCartBadge();
         alert('Checkout successful! Your order has been placed.');
@@ -369,7 +362,6 @@
       }
     });
 
-    // Start the app
     initialize();
   </script>
 </body>

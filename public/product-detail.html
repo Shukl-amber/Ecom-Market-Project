@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Ecom Market - Product Details</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/styles.css">
   <style>
     .product-detail-page {
       min-height: 100vh;
@@ -271,12 +271,10 @@
     let currentProduct = null;
     const userId = localStorage.getItem('userId');
 
-    // Check login status
     if (!userId) {
       window.location.href = 'index.html';
     }
 
-    // Get product ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     if (!productId) {
@@ -292,7 +290,6 @@
 
         document.title = `${currentProduct.name} - Ecom Market`;
 
-        // Update DOM with product details
         document.getElementById('productTitle').textContent = currentProduct.name;
         document.getElementById('productDescription').textContent = currentProduct.description;
         document.getElementById('productPrice').textContent = currentProduct.price.toLocaleString();
@@ -300,7 +297,6 @@
         document.getElementById('productCategory').textContent = currentProduct.category;
         document.getElementById('productStockQuantity').textContent = currentProduct.stock;
 
-        // Update stock status
         const stockStatus = document.getElementById('stockStatus');
         const stockText = currentProduct.stock > 10 ? 'In Stock' :
                          currentProduct.stock > 0 ? `Only ${currentProduct.stock} left` : 'Out of Stock';
@@ -311,15 +307,12 @@
         stockStatus.className = `stock-status ${stockClass}`;
         document.getElementById('productStock').textContent = stockText;
 
-        // Set up image gallery
         const mainImage = document.getElementById('mainImage');
         const thumbnailStrip = document.getElementById('thumbnailStrip');
         
-        // Setup main image
         mainImage.src = currentProduct.images[0].path;
         mainImage.alt = currentProduct.name;
 
-        // Create thumbnails
         thumbnailStrip.innerHTML = currentProduct.images
           .map((image, index) => `
             <img src="${image.path}" 
@@ -328,12 +321,10 @@
                 onclick="updateMainImage('${image.path}', this)">
           `).join('');
 
-        // Update quantity input max
         const quantityInput = document.getElementById('quantity');
         quantityInput.max = currentProduct.stock;
         quantityInput.disabled = currentProduct.stock === 0;
 
-        // Update add to cart button
         const addToCartBtn = document.querySelector('.add-to-cart-btn');
         addToCartBtn.disabled = currentProduct.stock === 0;
         if (currentProduct.stock === 0) {
@@ -349,7 +340,6 @@
     function updateMainImage(imagePath, thumbnailElement) {
       document.getElementById('mainImage').src = imagePath;
       
-      // Update active thumbnail
       document.querySelectorAll('.thumbnail').forEach(thumb => {
         thumb.classList.remove('active');
       });
@@ -395,7 +385,6 @@
       }
     }
 
-    // Quantity validation
     document.getElementById('quantity').addEventListener('change', (e) => {
       const value = parseInt(e.target.value);
       if (value < 1) {
@@ -405,7 +394,6 @@
       }
     });
 
-    // Load product details on page load
     fetchProductDetails();
   </script>
 </body>

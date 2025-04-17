@@ -449,7 +449,6 @@ app.post('/api/checkout', async (req, res) => {
 
     await Promise.all(updates);
 
-    // Clear cart
     cart.items = [];
     await cart.save();
 
@@ -459,7 +458,6 @@ app.post('/api/checkout', async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });

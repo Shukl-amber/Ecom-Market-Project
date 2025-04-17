@@ -78,7 +78,6 @@
           </div>
         </div>
 
-        <!-- Buyer specific fields -->
         <div id="buyerFields">
           <div class="form-group">
             <label for="signupAddress">Delivery Address *</label>
@@ -86,7 +85,6 @@
           </div>
         </div>
 
-        <!-- Seller specific fields -->
         <div id="sellerFields" style="display: none;">
           <div class="form-group">
             <label for="signupShopName">Shop Name *</label>
@@ -114,7 +112,6 @@
   </div>
 
   <script>
-    // Form switching logic
     document.querySelectorAll('input[name="formType"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         document.getElementById('loginForm').style.display = e.target.value === 'login' ? 'block' : 'none';
@@ -131,7 +128,6 @@
       document.getElementById('buyerFields').style.display = userType === 'buyer' ? 'block' : 'none';
       document.getElementById('sellerFields').style.display = userType === 'seller' ? 'block' : 'none';
 
-      // Update required attributes
       const buyerFields = ['signupAddress'];
       const sellerFields = ['signupShopName', 'signupBankAccount', 'signupPanNumber'];
 
@@ -144,7 +140,6 @@
       });
     }
 
-    // Handle login
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value;
@@ -183,7 +178,6 @@
       }
     });
 
-    // Handle signup
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const userType = document.querySelector('input[name="signupUserType"]:checked').value;
@@ -198,7 +192,6 @@
         userType
       };
 
-      // Add type-specific fields
       if (userType === 'buyer') {
         formData.address = document.getElementById('signupAddress').value;
       } else {
@@ -237,7 +230,6 @@
       }
     });
 
-    // Check if user is already logged in
     window.addEventListener('load', () => {
       const userId = localStorage.getItem('userId');
       if (userId) {
