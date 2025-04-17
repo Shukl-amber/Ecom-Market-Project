@@ -1,4 +1,3 @@
-// Import required dependencies
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,17 +6,14 @@ const multer = require('multer');
 const fs = require('fs');
 const { Product, User, Cart } = require('./models/models');
 
-// Initialize Express app
 const app = express();
 
-// Middleware setup
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MongoDB connection setup
 mongoose.connect('mongodb://localhost:27017/mydb', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -28,7 +24,6 @@ mongoose.connect('mongodb://localhost:27017/mydb', {
   process.exit(1);
 });
 
-// Handle MongoDB connection events
 mongoose.connection.on('error', err => {
   console.error('MongoDB connection error:', err);
 });
@@ -37,24 +32,20 @@ mongoose.connection.on('disconnected', () => {
   console.log('MongoDB disconnected');
 });
 
-// Graceful shutdown on SIGINT
 process.on('SIGINT', async () => {
   await mongoose.connection.close();
   process.exit(0);
 });
 
-// Configure multer for handling file uploads
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     const uploadDir = 'uploads/';
-    // Create uploads directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
   filename: function(req, file, cb) {
-    // Ensure unique filename and preserve original extension
     const uniqueSuffix = Date.now();
     const fileExt = path.extname(file.originalname);
     const baseName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, '-');
@@ -73,13 +64,12 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 5 // Max 5 files
+    fileSize: 5 * 1024 * 1024,
+    files: 5
   },
   fileFilter: fileFilter
 });
 
-// Error handler middleware for multer
 const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
@@ -95,12 +85,10 @@ const handleMulterError = (err, req, res, next) => {
 
 app.use(handleMulterError);
 
-// Ensure uploads directory exists
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// API Routes for user authentication
 app.post('/api/login', async (req, res) => {
   const { email, password, userType } = req.body;
   try {
@@ -139,7 +127,6 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
-// API Routes for product management
 app.get('/api/products', async (req, res) => {
   const { sort } = req.query;
   const sortOption = sort === 'price_asc' ? { price: 1 } : 
@@ -172,7 +159,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// Add product search endpoint
 app.get('/api/products/search/:query', async (req, res) => {
   try {
     const searchQuery = req.params.query;
@@ -190,10 +176,8 @@ app.get('/api/products/search/:query', async (req, res) => {
   }
 });
 
-// Update product creation endpoint
 app.post('/api/products', upload.array('images', 5), async (req, res) => {
   try {
-    // Log received data for debugging
     console.log('Files received:', req.files);
     console.log('Body received:', req.body);
 
@@ -203,9 +187,7 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
 
     const { name, price, description, category, brand, stock, sellerId } = req.body;
     
-    // Validate required fields
     if (!name || !price || !description || !category || !brand || !stock || !sellerId) {
-      // Clean up uploaded files
       req.files.forEach(file => {
         fs.unlink(path.join(__dirname, 'uploads', file.filename), err => {
           if (err) console.error('Error deleting file:', err);
@@ -214,13 +196,11 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Process images
     const images = req.files.map((file, index) => ({
       path: `/uploads/${file.filename}`,
       isCover: index === 0
     }));
 
-    // Create product
     const product = new Product({
       name,
       price: Number(price),
@@ -236,7 +216,6 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
     res.status(201).json(product);
 
   } catch (error) {
-    // Clean up uploaded files if product creation fails
     if (req.files) {
       req.files.forEach(file => {
         fs.unlink(path.join(__dirname, 'uploads', file.filename), err => {
@@ -258,7 +237,6 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Update basic fields
     const { name, price, category, brand, stock, description } = req.body;
     
     product.name = name;
@@ -268,9 +246,7 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
     product.stock = Number(stock);
     product.description = description;
 
-    // Handle new images if provided
     if (req.files && req.files.length > 0) {
-      // Delete old images
       product.images.forEach(image => {
         const imagePath = path.join(__dirname, image.path);
         if (fs.existsSync(imagePath)) {
@@ -278,7 +254,6 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
         }
       });
 
-      // Add new images
       product.images = req.files.map((file, index) => ({
         path: `/uploads/${file.filename}`,
         isCover: index === 0
@@ -288,7 +263,6 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
     await product.save();
     res.json(product);
   } catch (error) {
-    // Clean up uploaded files if update fails
     if (req.files) {
       req.files.forEach(file => {
         fs.unlink(file.path, err => {
@@ -317,12 +291,10 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
-// Cart API with stock validation
 app.post('/api/cart/add', async (req, res) => {
   const { userId, productId, quantity = 1 } = req.body;
   
   try {
-    // First check product availability
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -373,7 +345,6 @@ app.put('/api/cart/update', async (req, res) => {
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
     if (quantity > 0) {
-      // Check stock availability for quantity update
       const product = await Product.findById(productId);
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
@@ -390,7 +361,6 @@ app.put('/api/cart/update', async (req, res) => {
         cart.items.push({ productId, quantity });
       }
     } else {
-      // Remove item if quantity is 0 or negative
       cart.items = cart.items.filter(item => item.productId.toString() !== productId);
     }
     
@@ -418,7 +388,6 @@ app.delete('/api/cart/remove', async (req, res) => {
   }
 });
 
-// Add checkout endpoint
 app.post('/api/checkout', async (req, res) => {
   const { userId } = req.body;
   
@@ -428,7 +397,6 @@ app.post('/api/checkout', async (req, res) => {
       return res.status(400).json({ error: 'Cart is empty' });
     }
 
-    // Validate stock availability for all items
     for (const item of cart.items) {
       const product = item.productId;
       if (product.stock < item.quantity) {
@@ -438,7 +406,6 @@ app.post('/api/checkout', async (req, res) => {
       }
     }
 
-    // Update product stock
     const updates = cart.items.map(item => {
       return Product.findByIdAndUpdate(
         item.productId._id,
