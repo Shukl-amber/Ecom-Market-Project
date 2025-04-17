@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Product Schema
 const ProductSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
@@ -15,7 +14,6 @@ const ProductSchema = new mongoose.Schema({
   sellerId: { type: String, required: true }
 });
 
-// User Schema
 const UserSchema = new mongoose.Schema({
   email: { 
     type: String, 
@@ -39,12 +37,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // Buyer specific fields
   address: {
     type: String,
     required: function() { return this.userType === 'buyer'; }
   },
-  // Seller specific fields
   shopName: {
     type: String,
     required: function() { return this.userType === 'seller'; }
@@ -59,7 +55,6 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Cart Schema
 const CartSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   items: [{
@@ -68,7 +63,6 @@ const CartSchema = new mongoose.Schema({
   }]
 });
 
-// Create and export models
 const Product = mongoose.model('Product', ProductSchema);
 const User = mongoose.model('User', UserSchema);
 const Cart = mongoose.model('Cart', CartSchema);
