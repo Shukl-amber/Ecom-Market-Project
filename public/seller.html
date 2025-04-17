@@ -169,6 +169,10 @@
     imageUpload.addEventListener('drop', handleDrop);
     imageUpload.addEventListener('click', () => imageInput.click());
 
+    imageInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
     // Process dropped files
     function handleDrop(e) {
       const dt = e.dataTransfer;
@@ -178,15 +182,16 @@
 
     // Handle file selection (both from drop and file input)
     function handleFiles(files) {
-      files = [...files];
-      // Limit to maximum 5 images
-      if (files.length > 5) {
+      const fileList = Array.from(files);
+      
+      // Check total number of files
+      if (selectedImages.length + fileList.length > 5) {
         alert('Maximum 5 images allowed');
         return;
       }
 
       // Validate file types and sizes
-      const validFiles = files.filter(file => {
+      const validFiles = fileList.filter(file => {
         const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         const maxSize = 5 * 1024 * 1024; // 5MB limit per file
 
@@ -203,7 +208,8 @@
         return true;
       });
 
-      selectedImages = validFiles;
+      // Add new files to existing selection
+      selectedImages = [...selectedImages, ...validFiles];
       updateImagePreviews();
     }
 
@@ -242,6 +248,11 @@
       e.preventDefault();
       
       try {
+        if (selectedImages.length === 0 && !isEditing) {
+          alert('Please select at least one image');
+          return;
+        }
+
         // Create FormData object to handle file uploads and form data
         const formData = new FormData();
         const productId = document.getElementById('productId').value;

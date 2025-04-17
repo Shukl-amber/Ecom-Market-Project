@@ -44,31 +44,38 @@ process.on('SIGINT', async () => {
 
 // Configure multer for handling file uploads
 const storage = multer.diskStorage({
-  // Set the destination directory for uploaded files
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  // Generate unique filenames for uploaded files
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname.replace(/\s+/g, '-'));
+  destination: function(req, file, cb) {
+    const uploadDir = 'uploads/';
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function(req, file, cb) {
+    // Ensure unique filename and preserve original extension
+    const uniqueSuffix = Date.now();
+    const fileExt = path.extname(file.originalname);
+    const baseName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9]/g, '-');
+    cb(null, `${uniqueSuffix}-${baseName}${fileExt}`);
   }
 });
 
-// Configure file upload restrictions
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed!'), false);
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+  if (!allowedTypes.includes(file.mimetype)) {
+    return cb(new Error('Only image files are allowed!'), false);
   }
+  cb(null, true);
 };
 
-const upload = multer({ 
-  storage,
-  limits: { 
-    fileSize: 5 * 1024 * 1024, // 5MB file size limit
-    files: 5 // Maximum number of files
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+    files: 5 // Max 5 files
   },
-  fileFilter
+  fileFilter: fileFilter
 });
 
 // Error handler middleware for multer
@@ -235,8 +242,31 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+// Add product search endpoint
+app.get('/api/products/search/:query', async (req, res) => {
+  try {
+    const searchQuery = req.params.query;
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { description: { $regex: searchQuery, $options: 'i' } },
+        { brand: { $regex: searchQuery, $options: 'i' } },
+        { category: { $regex: searchQuery, $options: 'i' } }
+      ]
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update product creation endpoint
 app.post('/api/products', upload.array('images', 5), async (req, res) => {
   try {
+    // Log received data for debugging
+    console.log('Files received:', req.files);
+    console.log('Body received:', req.body);
+
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'At least one image is required' });
     }
@@ -245,15 +275,23 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
     
     // Validate required fields
     if (!name || !price || !description || !category || !brand || !stock || !sellerId) {
+      // Clean up uploaded files
+      req.files.forEach(file => {
+        fs.unlink(path.join(__dirname, 'uploads', file.filename), err => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      });
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+    // Process images
     const images = req.files.map((file, index) => ({
       path: `/uploads/${file.filename}`,
       isCover: index === 0
     }));
 
-    const product = await new Product({
+    // Create product
+    const product = new Product({
       name,
       price: Number(price),
       description,
@@ -262,18 +300,21 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
       stock: Number(stock),
       sellerId,
       images
-    }).save();
-    
-    res.json(product);
+    });
+
+    await product.save();
+    res.status(201).json(product);
+
   } catch (error) {
     // Clean up uploaded files if product creation fails
     if (req.files) {
       req.files.forEach(file => {
-        fs.unlink(file.path, err => {
+        fs.unlink(path.join(__dirname, 'uploads', file.filename), err => {
           if (err) console.error('Error deleting file:', err);
         });
       });
     }
+    console.error('Product creation error:', error);
     res.status(500).json({ error: error.message });
   }
 });
