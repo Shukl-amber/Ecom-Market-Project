@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ecom Market - Login</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="index_styles.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>Ecom Market</h1>
+        <p>Login or create an account to continue</p>
+      </div>
+
+      <div class="form-switcher">
+        <label>
+          <input type="radio" name="formType" value="login" checked>
+          <span>Login</span>
+        </label>
+        <label>
+          <input type="radio" name="formType" value="signup">
+          <span>Sign Up</span>
+        </label>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <div class="form-group">
+          <label>Account Type</label>
+          <div class="form-switcher">
+            <label>
+              <input type="radio" name="loginUserType" value="buyer" checked>
+              <span>Buyer</span>
+            </label>
+            <label>
+              <input type="radio" name="loginUserType" value="seller">
+              <span>Seller</span>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">Login</button>
+        <div id="loginError" class="error-message"></div>
+      </form>
+
+      <form id="signupForm" style="display: none;">
+        <div class="form-group">
+          <label for="signupName">Full Name *</label>
+          <input type="text" id="signupName" required>
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email *</label>
+          <input type="email" id="signupEmail" required>
+        </div>
+        <div class="form-group">
+          <label for="signupPhone">Phone Number *</label>
+          <input type="tel" id="signupPhone" required pattern="[0-9]{10}">
+        </div>
+        <div class="form-group">
+          <label>Account Type *</label>
+          <div class="form-switcher">
+            <label>
+              <input type="radio" name="signupUserType" value="buyer" checked onchange="toggleUserTypeFields()">
+              <span>Buyer</span>
+            </label>
+            <label>
+              <input type="radio" name="signupUserType" value="seller" onchange="toggleUserTypeFields()">
+              <span>Seller</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Buyer specific fields -->
+        <div id="buyerFields">
+          <div class="form-group">
+            <label for="signupAddress">Delivery Address *</label>
+            <textarea id="signupAddress" rows="3" required></textarea>
+          </div>
+        </div>
+
+        <!-- Seller specific fields -->
+        <div id="sellerFields" style="display: none;">
+          <div class="form-group">
+            <label for="signupShopName">Shop Name *</label>
+            <input type="text" id="signupShopName">
+          </div>
+          <div class="form-group">
+            <label for="signupBankAccount">Bank Account Number *</label>
+            <input type="text" id="signupBankAccount">
+          </div>
+          <div class="form-group">
+            <label for="signupPanNumber">PAN Number *</label>
+            <input type="text" id="signupPanNumber" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="signupPassword">Password *</label>
+          <input type="password" id="signupPassword" required minlength="6">
+        </div>
+
+        <button type="submit" class="submit-btn">Sign Up</button>
+        <div id="signupError" class="error-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Form switching logic
+    document.querySelectorAll('input[name="formType"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        document.getElementById('loginForm').style.display = e.target.value === 'login' ? 'block' : 'none';
+        document.getElementById('signupForm').style.display = e.target.value === 'signup' ? 'block' : 'none';
+        document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        document.getElementById('buyerFields').style.display = 'block';
+        document.getElementById('sellerFields').style.display = 'none';
+        document.querySelector('input[name="signupUserType"][value="buyer"]').checked = true;
+      });
+    });
+
+    function toggleUserTypeFields() {
+      const userType = document.querySelector('input[name="signupUserType"]:checked').value;
+      document.getElementById('buyerFields').style.display = userType === 'buyer' ? 'block' : 'none';
+      document.getElementById('sellerFields').style.display = userType === 'seller' ? 'block' : 'none';
+
+      // Update required attributes
+      const buyerFields = ['signupAddress'];
+      const sellerFields = ['signupShopName', 'signupBankAccount', 'signupPanNumber'];
+
+      buyerFields.forEach(id => {
+        document.getElementById(id).required = userType === 'buyer';
+      });
+
+      sellerFields.forEach(id => {
+        document.getElementById(id).required = userType === 'seller';
+      });
+    }
+
+    // Handle login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const userType = document.querySelector('input[name="loginUserType"]:checked').value;
+      const errorDisplay = document.getElementById('loginError');
+      errorDisplay.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, userType })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorDisplay.style.display = 'block';
+          if (data.error === 'Invalid credentials') {
+            errorDisplay.textContent = 'Incorrect email or password';
+          } else if (!data.found) {
+            errorDisplay.textContent = `No ${userType} account found with these credentials`;
+          } else {
+            errorDisplay.textContent = data.error;
+          }
+          return;
+        }
+
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('userName', data.name);
+        window.location.href = userType === 'buyer' ? 'buyer.html' : 'seller.html';
+      } catch (error) {
+        errorDisplay.style.display = 'block';
+        errorDisplay.textContent = 'An error occurred. Please try again.';
+      }
+    });
+
+    // Handle signup
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userType = document.querySelector('input[name="signupUserType"]:checked').value;
+      const errorDisplay = document.getElementById('signupError');
+      errorDisplay.style.display = 'none';
+
+      const formData = {
+        name: document.getElementById('signupName').value,
+        email: document.getElementById('signupEmail').value,
+        phone: document.getElementById('signupPhone').value,
+        password: document.getElementById('signupPassword').value,
+        userType
+      };
+
+      // Add type-specific fields
+      if (userType === 'buyer') {
+        formData.address = document.getElementById('signupAddress').value;
+      } else {
+        formData.shopName = document.getElementById('signupShopName').value;
+        formData.bankAccount = document.getElementById('signupBankAccount').value;
+        formData.panNumber = document.getElementById('signupPanNumber').value;
+      }
+
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorDisplay.style.display = 'block';
+          if (data.error.includes('Email already registered')) {
+            errorDisplay.textContent = 'This email is already registered. Please use a different email or login.';
+          } else if (data.error.includes('required')) {
+            errorDisplay.textContent = 'Please fill in all required fields.';
+          } else {
+            errorDisplay.textContent = data.error;
+          }
+          return;
+        }
+
+        localStorage.setItem('userId', data.userId);
+        localStorage.setItem('userName', data.name);
+        window.location.href = userType === 'buyer' ? 'buyer.html' : 'seller.html';
+      } catch (error) {
+        errorDisplay.style.display = 'block';
+        errorDisplay.textContent = 'An error occurred. Please try again.';
+      }
+    });
+
+    // Check if user is already logged in
+    window.addEventListener('load', () => {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const lastPage = localStorage.getItem('lastPage') || 'buyer.html';
+        window.location.href = lastPage;
+      }
+    });
+  </script>
+</body>
+</html>

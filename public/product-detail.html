@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ecom Market - Product Details</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .product-detail-page {
+      min-height: 100vh;
+      background: var(--soft-white);
+      padding: 1rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--mid-gray);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--charcoal);
+    }
+
+    .product-detail-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .product-images {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .main-image-container {
+      position: relative;
+      padding-top: 75%;
+      background: var(--soft-white);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .main-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 1rem;
+      transition: transform 0.3s;
+    }
+
+    .main-image:hover {
+      transform: scale(1.05);
+    }
+
+    .thumbnail-strip {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 0.5rem;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .thumbnail {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      background: var(--soft-white);
+      padding: 0.25rem;
+    }
+
+    .thumbnail:hover {
+      transform: translateY(-2px);
+    }
+
+    .thumbnail.active {
+      border-color: var(--bright-orange);
+      transform: translateY(-2px);
+    }
+
+    .product-details {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .product-title {
+      font-size: 2rem;
+      color: var(--charcoal);
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .product-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--soft-white);
+      border-radius: 8px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .meta-label {
+      color: var(--mid-gray);
+      font-size: 0.9rem;
+    }
+
+    .meta-value {
+      color: var(--charcoal);
+      font-weight: 500;
+    }
+
+    .price-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .current-price {
+      font-size: 2rem;
+      color: var(--bright-orange);
+      font-weight: 600;
+    }
+
+    .stock-status {
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .description {
+      line-height: 1.6;
+      color: var(--mid-gray);
+    }
+
+    .add-to-cart-section {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--medium-gray);
+    }
+
+    .quantity-input {
+      width: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .quantity-input:focus {
+      border-color: var(--sky-blue);
+      outline: none;
+    }
+
+    .add-to-cart-btn {
+      flex: 1;
+    }
+
+    .add-to-cart-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .product-detail-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+      }
+
+      .product-title {
+        font-size: 1.5rem;
+      }
+
+      .current-price {
+        font-size: 1.5rem;
+      }
+
+      .add-to-cart-section {
+        flex-direction: column;
+      }
+
+      .quantity-input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="product-detail-page">
+    <div class="container">
+      <a href="buyer.html" class="back-link">
+        ← Back to Products
+      </a>
+
+      <div class="product-detail-container">
+        <div class="product-images">
+          <div class="main-image-container">
+            <img id="mainImage" class="main-image" src="" alt="Product">
+          </div>
+          <div class="thumbnail-strip" id="thumbnailStrip"></div>
+        </div>
+
+        <div class="product-details">
+          <h1 id="productTitle" class="product-title"></h1>
+          
+          <div class="product-meta">
+            <div class="meta-item">
+              <span class="meta-label">Brand</span>
+              <span id="productBrand" class="meta-value"></span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Category</span>
+              <span id="productCategory" class="meta-value"></span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Stock Quantity</span>
+              <span id="productStockQuantity" class="meta-value"></span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Status</span>
+              <span id="productStock" class="meta-value"></span>
+            </div>
+          </div>
+
+          <div class="price-section">
+            <span class="current-price">₹<span id="productPrice"></span></span>
+            <span id="stockStatus" class="stock-status"></span>
+          </div>
+
+          <p id="productDescription" class="description"></p>
+
+          <div class="add-to-cart-section">
+            <input type="number" id="quantity" class="quantity-input" value="1" min="1">
+            <button onclick="addToCart()" class="btn btn-primary add-to-cart-btn">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentProduct = null;
+    const userId = localStorage.getItem('userId');
+
+    // Check login status
+    if (!userId) {
+      window.location.href = 'index.html';
+    }
+
+    // Get product ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    if (!productId) {
+      window.location.href = 'buyer.html';
+    }
+
+    async function fetchProductDetails() {
+      try {
+        const response = await fetch(`/api/products/${productId}`);
+        if (!response.ok) throw new Error('Failed to fetch product');
+        
+        currentProduct = await response.json();
+
+        document.title = `${currentProduct.name} - Ecom Market`;
+
+        // Update DOM with product details
+        document.getElementById('productTitle').textContent = currentProduct.name;
+        document.getElementById('productDescription').textContent = currentProduct.description;
+        document.getElementById('productPrice').textContent = currentProduct.price.toLocaleString();
+        document.getElementById('productBrand').textContent = currentProduct.brand;
+        document.getElementById('productCategory').textContent = currentProduct.category;
+        document.getElementById('productStockQuantity').textContent = currentProduct.stock;
+
+        // Update stock status
+        const stockStatus = document.getElementById('stockStatus');
+        const stockText = currentProduct.stock > 10 ? 'In Stock' :
+                         currentProduct.stock > 0 ? `Only ${currentProduct.stock} left` : 'Out of Stock';
+        const stockClass = currentProduct.stock > 10 ? 'badge-success' :
+                         currentProduct.stock > 0 ? 'badge-warning' : 'badge-error';
+        
+        stockStatus.textContent = stockText;
+        stockStatus.className = `stock-status ${stockClass}`;
+        document.getElementById('productStock').textContent = stockText;
+
+        // Set up image gallery
+        const mainImage = document.getElementById('mainImage');
+        const thumbnailStrip = document.getElementById('thumbnailStrip');
+        
+        // Setup main image
+        mainImage.src = currentProduct.images[0].path;
+        mainImage.alt = currentProduct.name;
+
+        // Create thumbnails
+        thumbnailStrip.innerHTML = currentProduct.images
+          .map((image, index) => `
+            <img src="${image.path}" 
+                alt="${currentProduct.name} view ${index + 1}" 
+                class="thumbnail${index === 0 ? ' active' : ''}"
+                onclick="updateMainImage('${image.path}', this)">
+          `).join('');
+
+        // Update quantity input max
+        const quantityInput = document.getElementById('quantity');
+        quantityInput.max = currentProduct.stock;
+        quantityInput.disabled = currentProduct.stock === 0;
+
+        // Update add to cart button
+        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+        addToCartBtn.disabled = currentProduct.stock === 0;
+        if (currentProduct.stock === 0) {
+          addToCartBtn.textContent = 'Out of Stock';
+        }
+
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        alert('Failed to load product details');
+      }
+    }
+
+    function updateMainImage(imagePath, thumbnailElement) {
+      document.getElementById('mainImage').src = imagePath;
+      
+      // Update active thumbnail
+      document.querySelectorAll('.thumbnail').forEach(thumb => {
+        thumb.classList.remove('active');
+      });
+      thumbnailElement.classList.add('active');
+    }
+
+    async function addToCart() {
+      if (!currentProduct) return;
+
+      const quantity = parseInt(document.getElementById('quantity').value);
+      if (quantity < 1) {
+        alert('Please select a valid quantity');
+        return;
+      }
+
+      if (quantity > currentProduct.stock) {
+        alert('Selected quantity exceeds available stock');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId,
+            productId: currentProduct._id,
+            quantity
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add to cart');
+        }
+
+        const result = await response.json();
+        alert('Product added to cart successfully');
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add product to cart');
+      }
+    }
+
+    // Quantity validation
+    document.getElementById('quantity').addEventListener('change', (e) => {
+      const value = parseInt(e.target.value);
+      if (value < 1) {
+        e.target.value = 1;
+      } else if (value > currentProduct.stock) {
+        e.target.value = currentProduct.stock;
+      }
+    });
+
+    // Load product details on page load
+    fetchProductDetails();
+  </script>
+</body>
+</html>
